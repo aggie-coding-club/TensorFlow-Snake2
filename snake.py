@@ -31,4 +31,4 @@ class Snake:
         """
         Attempts to detect if the snake it colliding with itself
         """
-        except NotImplementedError()
+        raise NotImplementedError()

@@ -1,5 +1,4 @@
 from class_definitions import *
-from pprint import pprint
 
 game = BoardState(x=5, y=5)
 

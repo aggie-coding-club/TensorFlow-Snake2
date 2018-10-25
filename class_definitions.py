@@ -10,6 +10,10 @@ class GameOver(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+class HailVictory(Exception):
+    def __init__(self):
+        super().__init__("You Win!")
+
 class BoardObject:
     """abstract class that all things that go on the board belong to"""
     def __init__(self):
@@ -28,7 +32,7 @@ class Snake(BoardObject):
         """
         self.id = id
     def __str__(self):
-        return str(self.id)
+        #return str(self.id) #for debugging
         if self.id == 0:
             return "🚈"
         else:
@@ -94,6 +98,9 @@ class BoardState:
             self.snakeblocks = [[new_x, new_y]] + self.snakeblocks
             last_x = None
             last_y = None
+            if len(self.snakeblocks) == self.x*self.y:
+                raise HailVictory()
+            self.activate_apple()
         if self.internal_map[new_x][new_y].__class__.__name__ == "Snake":
             raise GameOver("You hit yourself!")
         if last_x is not None and last_y is not None:

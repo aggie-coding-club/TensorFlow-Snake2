@@ -7,25 +7,31 @@ import enum
 #
 
 class GameOver(Exception):
+    """Exception thrown to end the game. Efficiency is okay for now.
+    Meaning: you lose"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 class HailVictory(Exception):
+    """Exception thrown to end the game. Efficiency is okay for now.
+    Meaning: you win"""
     def __init__(self):
         super().__init__("You Win!")
 
 class BoardObject:
-    """abstract class that all things that go on the board belong to"""
+    """Abstract class that all things that go on the board belong to"""
     def __init__(self):
         raise NotImplementedError
 
 class Nothing(BoardObject):
+    """A blank block"""
     def __init__(self):
         pass
     def __str__(self):
         return "🗆"
 
 class Snake(BoardObject):
+    """A snake block"""
     def __init__(self, id=0):
         """
         input id <int> 0-head, 1-first part, 2-second part, etc etc
@@ -39,14 +45,16 @@ class Snake(BoardObject):
             return "🚃"
 
 class Apple(BoardObject):
+    """An apple block"""
     def __init__(self):
         pass
     def __str__(self):
         return "🍎"
 
 class Solver():
+    """Abstract base class all solvers belong to."""
     def __init__(self):
-        pass
+        raise NotImplementedError()
 
 class Direction(enum.Enum):
     """valid directions fed into BoardState::move()"""
@@ -56,7 +64,20 @@ class Direction(enum.Enum):
     LEFT = [-1,0]
 
 class BoardState:
-    """the stuff all the things are on"""
+    """A board which move operations can be applied to.
+    
+    Internal variables:
+    x - size of board (x constraint)
+    y - size of board (y constraint)
+    internal_map - list of lists of BoardObjects
+    snakeblocks - list of tuples, each tuple is a coordinate of a snake block.
+        the first tuple is the head, the second is the first part, etc
+    
+    Internal methods:
+    activate_apple() <private pls> - generates an apple on a blank space
+        <private> -> no need to call this method externally.
+            -> you can, which may have unintended results, but you don't have to.
+    move(Direction) - attempts to move snake in given direction"""
     def __init__(self, x=10, y=10):
         """the constructor
         input x <int> - size of board x
@@ -65,7 +86,7 @@ class BoardState:
         self.y = y #size in y
         self.internal_map = [[Nothing() for _ in range(y)] for _ in range(x)] #fill board with Nothing
         self.internal_map[x//2][y//2] = Snake(id=0) #put snake in middle
-        self.snakeblocks = [[x//2, y//2]] #list of snake parts
+        self.snakeblocks = [(x//2, y//2)] #list of snake parts
         self.activate_apple()
     def __str__(self):
         """print out board"""
@@ -103,9 +124,9 @@ class BoardState:
         if self.internal_map[new_x][new_y].__class__.__name__ == "Nothing":
             for i in range(len(self.snakeblocks)-1, 0,-1):
                 self.snakeblocks[i] = self.snakeblocks[i-1]
-            self.snakeblocks[0] = [new_x,new_y]
+            self.snakeblocks[0] = (new_x,new_y)
         if self.internal_map[new_x][new_y].__class__.__name__ == "Apple":
-            self.snakeblocks = [[new_x, new_y]] + self.snakeblocks
+            self.snakeblocks = [(new_x, new_y)] + self.snakeblocks
             last_x = None
             last_y = None
             if len(self.snakeblocks) == self.x*self.y:
@@ -120,6 +141,7 @@ class BoardState:
 
 
 class FixedPathSolver(Solver):
+    """Solver that attempts to complete by having the snake follow a fixed path"""
     def __init__(self, bs):
         self.board = bs
     def solve(self, apply=True):

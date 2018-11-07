@@ -49,32 +49,39 @@ class Solver():
         pass
 
 class Direction(enum.Enum):
-    UP = [-1,0]
-    RIGHT = [0,1]
-    DOWN = [1,0]
-    LEFT = [0,-1]
+    """valid directions fed into BoardState::move()"""
+    UP = [0,1]
+    RIGHT = [1,0]
+    DOWN = [0,-1]
+    LEFT = [-1,0]
 
 class BoardState:
     """the stuff all the things are on"""
     def __init__(self, x=10, y=10):
-        self.x = x
-        self.y = y
-        self.internal_map = [[Nothing() for _ in range(y)] for _ in range(x)]
-        self.internal_map[x//2][y//2] = Snake(id=0)
-        self.snakeblocks = [[x//2, y//2]]
-        #test
-        #self.internal_map[1][2] = Snake(id=0)
-        #self.snakeblocks = [[1,2]]
+        """the constructor
+        input x <int> - size of board x
+        input y <int> - size of board y"""
+        self.x = x #size in x of board
+        self.y = y #size in y
+        self.internal_map = [[Nothing() for _ in range(y)] for _ in range(x)] #fill board with Nothing
+        self.internal_map[x//2][y//2] = Snake(id=0) #put snake in middle
+        self.snakeblocks = [[x//2, y//2]] #list of snake parts
         self.activate_apple()
     def __str__(self):
+        """print out board"""
         out = ""
-        for ix in range(self.x):
+        for iy in range(self.y-1,-1,-1):
             out += "["
-            for iy in range(self.y):
-                out += " " + self.internal_map[ix][iy].__str__()
+            for ix in range(self.x):
+                try:
+                    out += " " + self.internal_map[ix][iy].__str__()
+                except Exception as ex:
+                    print(ix, iy, self.x, self.y)
+                    raise ex
             out += "]\n"
         return out
     def activate_apple(self):
+        """generates apple in empty space"""
         empty_indices = []
         for ix in range(self.x):
             for iy in range(self.y):
@@ -83,6 +90,9 @@ class BoardState:
         chosen_coords = empty_indices[np.random.randint(len(empty_indices))]
         self.internal_map[chosen_coords[0]][chosen_coords[1]] = Apple()
     def move(self, input):
+        """moves the snake in direction
+        input <Direction> - direction snake moves in
+        """
         assert input.__class__.__name__ == "Direction", "Unrecognized input"
         new_x = self.snakeblocks[0][0] + input.value[0]
         new_y = self.snakeblocks[0][1] + input.value[1]
@@ -101,9 +111,25 @@ class BoardState:
             if len(self.snakeblocks) == self.x*self.y:
                 raise HailVictory()
             self.activate_apple()
-        if self.internal_map[new_x][new_y].__class__.__name__ == "Snake":
+        if self.internal_map[new_x][new_y].__class__.__name__ == "Snake" and [new_x,new_y] != self.snakeblocks[-1]:
             raise GameOver("You hit yourself!")
         if last_x is not None and last_y is not None:
             self.internal_map[last_x][last_y] = Nothing()
         for idx, i in enumerate(self.snakeblocks):
             self.internal_map[i[0]][i[1]] = Snake(id=idx)
+
+
+class FixedPathSolver(Solver):
+    def __init__(self, bs):
+        self.board = bs
+    def solve(self, apply=True):
+        moves = [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]
+        invalid_positions = self.board.snakeblocks[:-1].append("the top parts the bottom parts the left parts the right parts")
+
+
+        head_pos = self.board.snakeblocks[0]
+        
+        my_dir = moves[np.random.randint(4)]
+        if apply:
+            self.board.move(my_dir)
+        return my_dir

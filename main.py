@@ -1,6 +1,7 @@
 from class_definitions import *
+import time
 
-game = BoardState(x=10, y=10)
+game = BoardState(x=8, y=8)
 
 print(game)
 
@@ -14,6 +15,8 @@ for i in range(10):
         print(ex)
         break"""
 
+
+a="""
 dir_dict = {
     "u":Direction.UP,
     "d":Direction.DOWN,
@@ -44,4 +47,10 @@ while(True):
         break
     else:
         print("unrecognized input")
-        continue
+        continue"""
+
+my_solver = FixedPathSolver(game)
+while(True):
+    my_solver.solve()
+    print(my_solver.board)
+    time.sleep(0.1)

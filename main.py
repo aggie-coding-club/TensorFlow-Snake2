@@ -1,7 +1,7 @@
 from class_definitions import *
 import time
 
-game = BoardState(x=8, y=8)
+game = BoardState(x=8, y=11)
 
 print(game)
 
@@ -49,8 +49,11 @@ while(True):
         print("unrecognized input")
         continue"""
 
-my_solver = FixedPathSolver(game)
+debug = """
+my_solver = RandomSolver(game)
 while(True):
     my_solver.solve()
     print(my_solver.board)
-    time.sleep(0.1)
+    time.sleep(0.1)"""
+
+my_solver = FixedPathSolver(game)

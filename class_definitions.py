@@ -55,6 +55,8 @@ class Solver():
     """Abstract base class all solvers belong to."""
     def __init__(self):
         raise NotImplementedError()
+    def solve(self):
+        raise NotImplementedError()
 
 class Direction(enum.Enum):
     """valid directions fed into BoardState::move()"""
@@ -62,6 +64,7 @@ class Direction(enum.Enum):
     RIGHT = [1,0]
     DOWN = [0,-1]
     LEFT = [-1,0]
+    NONE = [0, 0]
 
 class BoardState:
     """A board which move operations can be applied to.
@@ -92,7 +95,7 @@ class BoardState:
         """print out board"""
         out = ""
         for iy in range(self.y-1,-1,-1):
-            out += "["
+            out += (str(iy) + "\t[")
             for ix in range(self.x):
                 try:
                     out += " " + self.internal_map[ix][iy].__str__()
@@ -100,6 +103,10 @@ class BoardState:
                     print(ix, iy, self.x, self.y)
                     raise ex
             out += "]\n"
+        out += " \t  "
+        for ix in range(self.x):
+            out += (str(ix) + " ")
+        out += "\n"
         return out
     def activate_apple(self):
         """generates apple in empty space"""
@@ -144,13 +151,121 @@ class FixedPathSolver(Solver):
     """Solver that attempts to complete by having the snake follow a fixed path"""
     def __init__(self, bs):
         self.board = bs
+        self.path = self.generate_path(self.board.x, self.board.y)
+        print(self.print_path())
+
     def solve(self, apply=True):
         moves = [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]
-        invalid_positions = self.board.snakeblocks[:-1].append("the top parts the bottom parts the left parts the right parts")
+        my_dir = moves[np.random.randint(4)]
+        if apply:
+            self.board.move(my_dir)
+        return my_dir
 
+    def generate_path(self, x, y):
+        """generates a path
 
-        head_pos = self.board.snakeblocks[0]
+        Inputs
+        t_max <2-tuple> - contains maximum size of board (x_max_size, y_max_size)
+
+        Outputs
+        list of list of Directions"""
+
+        #IFF = If and only if (logical biconditional)
+        #The board has a solution IFF the board can be tiled
+        #The board can be tiled IFF the board is not i x j such that i and j are odd numbers
+        if x%2==1 and y%2==1:
+            raise Exception("No solution exists")
+
+        output = [[Direction.NONE for _ in range(y)] for _ in range(x)]
         
+        #algo: go down the even end then wrap along other axis
+        if y%2==0:
+            #left edge
+            for i in range(1,y):
+                output[0][i] = Direction.DOWN
+            #top edge
+            for i in range(1,x):
+                output[i][y-1] = Direction.LEFT
+            #bottom left
+            output[0][0] = Direction.RIGHT
+            # top and left edge is done
+            
+            #bottom up, every 2
+            for iy in range(0,y-1,2):
+                for ix in range(1,x-1):
+                    output[ix][iy] = Direction.RIGHT
+                output[x-1][iy] = Direction.UP
+
+            #bottom+1 up, every 2
+            for iy in range(1,y-1,2):
+                for ix in range(1,x):
+                    output[ix][iy] = Direction.LEFT
+                output[1][iy] = Direction.UP
+
+        if x%2==0: ###WIP!
+            #top edge
+            for i in range(1,y):
+                output[i][0] = Direction.LEFT
+            #top edge
+            for i in range(1,x):
+                output[i][y-1] = Direction.LEFT
+            #bottom left
+            output[0][0] = Direction.RIGHT
+            # top and left edge is done
+            
+            #bottom up, every 2
+            for iy in range(0,y-1,2):
+                for ix in range(1,x-1):
+                    output[ix][iy] = Direction.RIGHT
+                output[x-1][iy] = Direction.UP
+
+            #bottom+1 up, every 2
+            for iy in range(1,y-1,2):
+                for ix in range(1,x):
+                    output[ix][iy] = Direction.LEFT
+                output[1][iy] = Direction.UP
+
+        return output
+
+    def print_path(self):
+        """print out path"""
+        x = self.board.x
+        y = self.board.y
+        out = ""
+        for iy in range(y-1,-1,-1):
+            out += (str(iy) + "\t[")
+            for ix in range(x):
+                try:
+                    out += " "
+                    if(self.path[ix][iy]==Direction.UP):
+                        out += "U"
+                    if(self.path[ix][iy]==Direction.DOWN):
+                        out += "D"
+                    if(self.path[ix][iy]==Direction.LEFT):
+                        out += "L"
+                    if(self.path[ix][iy]==Direction.RIGHT):
+                        out += "R"
+                    if(self.path[ix][iy]==Direction.NONE):
+                        out += "N"
+                except Exception as ex:
+                    print(ix, iy, x, y)
+                    raise ex
+            out += "]\n"
+        out += " \t  "
+        for ix in range(x):
+            out += (str(ix) + " ")
+        out += "\n"
+        return out
+            
+
+
+class RandomSolver(Solver):
+    """Solver that attempts to complete by having the snake follow a fixed path"""
+    def __init__(self, bs):
+        self.board = bs
+
+    def solve(self, apply=True):
+        moves = [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]
         my_dir = moves[np.random.randint(4)]
         if apply:
             self.board.move(my_dir)

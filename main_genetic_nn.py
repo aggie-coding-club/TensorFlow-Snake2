@@ -50,19 +50,27 @@ class EVO_NN:
     def __init__(self, func_list=[left_clear, front_clear, right_clear, apple_left, apple_front, apple_right], weights=None):
         self.flist = func_list
         self.game = BoardState(x=10, y=10)
-        self.lay1 = 64
+        self.lay1 = 32
         self.lay2 = 8
         self.lay3 = 3
         
         if weights is None:
             #weights, adjust so that sum should be ~0.5
-            self.l1w = np.random.rand(64, 6) / 6
-            self.l2w = np.random.rand(8, 64) / 64
-            self.l3w = np.random.rand(3, 8) / 8
+            self.l1w = (np.random.rand(self.lay1, len(self.flist)) * 2 - 1) / len(self.flist)
+            self.l2w = (np.random.rand(self.lay2, self.lay1) * 2 - 1) / self.lay1
+            self.l3w = (np.random.rand(3, self.lay2) * 2 - 1) / self.lay2
+
+            self.l1b = (np.random.rand(self.lay1)) * 2 - 1
+            self.l2b = (np.random.rand(self.lay2)) * 2 - 1
+            self.l3b = (np.random.rand(self.lay3)) * 2 - 1
         else:
             self.l1w = np.array(weights["l1"])
             self.l2w = np.array(weights["l2"])
             self.l3w = np.array(weights["l3"])
+
+            self.l1b = np.array(weights["b1"])
+            self.l2b = np.array(weights["b2"])
+            self.l3b = np.array(weights["b3"])
 
     def eval_nn(self):
         def softmax(z):
@@ -73,9 +81,9 @@ class EVO_NN:
         for f in self.flist:
             assert f.__class__.__name__ == "function", repr(f) + " is not a function"
         self.inputs = np.array([f(self.game) for f in self.flist])
-        l1 = tanh(np.matmul(self.l1w, self.inputs))
-        l2 = tanh(np.matmul(self.l2w, l1))
-        l3 = softmax(np.matmul(self.l3w, l2))
+        l1 = tanh(np.matmul(self.l1w, self.inputs) + self.l1b)
+        l2 = tanh(np.matmul(self.l2w, l1) + self.l2b)
+        l3 = softmax(np.matmul(self.l3w, l2) + self.l3b)
 
         dir = [Direction.LEFT, Direction.FORWARD, Direction.RIGHT]
         out = [0, 0, 0]
@@ -87,7 +95,7 @@ class EVO_NN:
         moves = 0
         log = "move#: %s, score: %s\n"%(moves, score) + self.game.__str__()
         try:
-            for _ in range(2716):
+            for _ in range(50):
                 moves += 1
                 move_dir, one_hot = self.eval_nn()
                 self.game.move3(move_dir)
@@ -105,6 +113,7 @@ class EVO_NN:
                 score += 100000
                 return score, moves
             elif isinstance(e, GameOver):
+                score -= 10000
                 return score, moves
             else:
                 raise e
@@ -123,7 +132,7 @@ class GenerationEVO_NN:
         package should be in form:
         {
             history = {
-                g1 = list of nn weights
+                g1 = list of [score, steps]
                 g2 = ..
                 gn = ..
             }
@@ -145,10 +154,11 @@ class GenerationEVO_NN:
                 print("Loading generation from file...")
                 package = json.load(f)
                 self.history = package["history"]
+                self.results = []
                 self.top_generation = package["top"]
                 self.generation = len(self.history)-1
                 self.size = len(self.history["g0"])
-                self.Internal_NNs = [EVO_NN(weights=i) for i in self.history["g"+str(self.generation)]]
+                self.Internal_NNs = [EVO_NN(weights=i["weights"]) for i in self.top_generation]
                 print("Generation data loaded. Total of %s generations found."%(self.generation+1))
     def evaluate_weights(self, display=True):
         self.results = []
@@ -160,6 +170,9 @@ class GenerationEVO_NN:
                 weights["l1"] = i.l1w.tolist()
                 weights["l2"] = i.l2w.tolist()
                 weights["l3"] = i.l3w.tolist()
+                weights["b1"] = i.l1b.tolist()
+                weights["b2"] = i.l2b.tolist()
+                weights["b3"] = i.l3b.tolist()
                 self.top_generation.append({"result":result, "weights":weights})
             else:
                 top_scores = [x["result"][0] for x in self.top_generation]
@@ -169,9 +182,13 @@ class GenerationEVO_NN:
                     weights["l1"] = i.l1w.tolist()
                     weights["l2"] = i.l2w.tolist()
                     weights["l3"] = i.l3w.tolist()
+                    weights["b1"] = i.l1b.tolist()
+                    weights["b2"] = i.l2b.tolist()
+                    weights["b3"] = i.l3b.tolist()
                     idx = np.argmin(top_scores)
                     self.top_generation[idx] = {"result":result, "weights":weights}
         if display:
+            print("GENERATION %s"%(self.generation+1))
             print(self.results)
             top_scores = [x["result"][0] for x in self.top_generation]
             print("TOP:",top_scores)
@@ -179,18 +196,30 @@ class GenerationEVO_NN:
         gstring = "g"+str(self.generation)
         self.history[gstring] = None
         self.history[gstring] = []
-        for nn in self.Internal_NNs:
-            weights = {}
-            weights["l1"] = nn.l1w.tolist()
-            weights["l2"] = nn.l2w.tolist()
-            weights["l3"] = nn.l3w.tolist()
+        if False: #disable weight saving
+            for nn in self.Internal_NNs:
+                weights = {}
+                weights["l1"] = nn.l1w.tolist()
+                weights["l2"] = nn.l2w.tolist()
+                weights["l3"] = nn.l3w.tolist()
+                weights["b1"] = nn.l1b.tolist()
+                weights["b2"] = nn.l2b.tolist()
+                weights["b3"] = nn.l3b.tolist()
             self.history[gstring].append(weights)
+        weights = {}
         weights["top"] = self.top_generation
+        self.history[gstring] = self.results
     def save_weights(self, filename="history.json"):
         self.retrieve_weights()
         with open(filename,"w", encoding="utf-8") as f:
             json.dump({"history":self.history, "top":self.top_generation}, f)
     def evolve(self, ptile = 80, evolution_wildness=0.05):
+        def randomize_percent(arr, p):
+            out = arr * np.reshape(np.random.rand(len(np.ravel(arr))),(np.shape(arr))) * 2 * p + 1 - p
+            return out
+        def randomize_flat(arr, max_amt):
+            out = arr + (np.reshape(np.random.rand(len(np.ravel(arr))),(np.shape(arr))) * 2 - 1) * max_amt
+            return out
         scores = [x[0] for x in self.results]
         cutoff = np.percentile(scores, ptile)
         indices = np.where(scores > cutoff)
@@ -200,9 +229,13 @@ class GenerationEVO_NN:
             idx = np.random.randint(len(indices))
             victorious_network = self.top_generation[idx]["weights"]
             weights = {}
-            weights["l1"] = victorious_network["l1"] * np.reshape(np.random.rand(len(np.ravel(victorious_network["l1"]))),(np.shape(victorious_network["l1"]))) * 2 * evolution_wildness + 1 - evolution_wildness
-            weights["l2"] = victorious_network["l2"] * np.reshape(np.random.rand(len(np.ravel(victorious_network["l2"]))),(np.shape(victorious_network["l2"]))) * 2 * evolution_wildness + 1 - evolution_wildness
-            weights["l3"] = victorious_network["l3"] * np.reshape(np.random.rand(len(np.ravel(victorious_network["l3"]))),(np.shape(victorious_network["l3"]))) * 2 * evolution_wildness + 1 - evolution_wildness
+            weights["l1"] = randomize_flat(victorious_network["l1"], evolution_wildness)
+            weights["l2"] = randomize_flat(victorious_network["l2"], evolution_wildness)
+            weights["l3"] = randomize_flat(victorious_network["l3"], evolution_wildness)
+            weights["b1"] = randomize_flat(victorious_network["b1"], evolution_wildness)
+            weights["b2"] = randomize_flat(victorious_network["b2"], evolution_wildness)
+            weights["b3"] = randomize_flat(victorious_network["b3"], evolution_wildness)
+
             new_net.append(EVO_NN(weights=weights))
         self.generation += 1
         self.Internal_NNs = new_net
@@ -210,11 +243,12 @@ class GenerationEVO_NN:
 start = time.time()
 
 #start#
-g = GenerationEVO_NN(load_from_file="history.json")
-for i in range(10):
+g = GenerationEVO_NN(50)
+g.save_weights("history.json")
+for i in range(100):
     g.evaluate_weights(display=True)
     g.save_weights("history.json")
-    g.evolve()
+    g.evolve(evolution_wildness=0.1)
 #end#
 
 end = time.time()

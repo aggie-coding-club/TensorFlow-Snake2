@@ -53,8 +53,8 @@ class Apple(BoardObject):
 
 class Solver():
     """Abstract base class all solvers belong to."""
-    def __init__(self):
-        raise NotImplementedError()
+    def __init__(self, bs):
+        self.board = bs
     def solve(self):
         raise NotImplementedError()
 
@@ -65,6 +65,7 @@ class Direction(enum.Enum):
     DOWN = [0,-1]
     LEFT = [-1,0]
     NONE = [0, 0]
+    FORWARD = [None, None]
 
 class BoardState:
     """A board which move operations can be applied to.
@@ -91,6 +92,9 @@ class BoardState:
         self.internal_map[x//2][y//2] = Snake(id=0) #put snake in middle
         self.snakeblocks = [(x//2, y//2)] #list of snake parts
         self.activate_apple()
+        self.last_dir = Direction.LEFT
+        self.touched_apple = False
+        self.last_pos = [None, None]
     def __str__(self):
         """print out board"""
         out = ""
@@ -116,16 +120,20 @@ class BoardState:
                 if self.internal_map[ix][iy].__class__.__name__ == "Nothing":
                     empty_indices.append([ix, iy])
         chosen_coords = empty_indices[np.random.randint(len(empty_indices))]
+        self.apple = [chosen_coords[0], chosen_coords[1]]
         self.internal_map[chosen_coords[0]][chosen_coords[1]] = Apple()
     def move(self, input):
         """moves the snake in direction
         input <Direction> - direction snake moves in
         """
         assert input.__class__.__name__ == "Direction", "Unrecognized input"
+        self.touched_apple = False
+        self.last_dir = input
         new_x = self.snakeblocks[0][0] + input.value[0]
         new_y = self.snakeblocks[0][1] + input.value[1]
         last_x = self.snakeblocks[-1][0]
         last_y = self.snakeblocks[-1][1]
+        self.last_pos = [last_x, last_y]
         if new_x >= self.x or new_y >= self.y or new_x < 0 or new_y < 0:
             raise GameOver("You went off the map!")
         if self.internal_map[new_x][new_y].__class__.__name__ == "Nothing":
@@ -133,6 +141,7 @@ class BoardState:
                 self.snakeblocks[i] = self.snakeblocks[i-1]
             self.snakeblocks[0] = (new_x,new_y)
         if self.internal_map[new_x][new_y].__class__.__name__ == "Apple":
+            self.touched_apple = True
             self.snakeblocks = [(new_x, new_y)] + self.snakeblocks
             last_x = None
             last_y = None
@@ -145,12 +154,29 @@ class BoardState:
             self.internal_map[last_x][last_y] = Nothing()
         for idx, i in enumerate(self.snakeblocks):
             self.internal_map[i[0]][i[1]] = Snake(id=idx)
-
+    def move3(self, input):
+        """When you think about it, there are only ever 3 valid moves at most.
+        You can never move backwards. Thus, we can kill off a dimension of the problem
+        by only allowing left, right and forward.
+        """
+        self.move(self.direction_3_to_4(input))
+    def direction_3_to_4(self, input):
+        """converts relative forward, left, right to absolute direction
+        compared to last move
+        """
+        assert input in [Direction.LEFT, Direction.RIGHT, Direction.FORWARD], "Invalid move"
+        dirs_cw = [Direction.RIGHT, Direction.UP, Direction.LEFT, Direction.DOWN]
+        if input==Direction.FORWARD:
+            return self.last_dir
+        elif input==Direction.LEFT:
+            return dirs_cw[(dirs_cw.index(self.last_dir)+1)%4]
+        elif input==Direction.RIGHT:
+            return dirs_cw[(dirs_cw.index(self.last_dir)-1)%4]
 
 class FixedPathSolver(Solver):
     """Solver that attempts to complete by having the snake follow a fixed path"""
     def __init__(self, bs):
-        self.board = bs
+        super(FixedPathSolver, self).__init__(bs)
         self.path = self.generate_path(self.board.x, self.board.y)
         #print(self.print_path())
 
@@ -269,14 +295,11 @@ class FixedPathSolver(Solver):
             out += (str(ix) + " ")
         out += "\n"
         return out
-            
-
 
 class RandomSolver(Solver):
     """Solver that attempts to complete by having the snake follow a fixed path"""
     def __init__(self, bs):
-        self.board = bs
-
+        super(RandomSolver, self).__init__(bs)
     def solve(self, apply=True):
         moves = [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]
         my_dir = moves[np.random.randint(4)]

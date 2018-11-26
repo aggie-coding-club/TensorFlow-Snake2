@@ -152,11 +152,11 @@ class FixedPathSolver(Solver):
     def __init__(self, bs):
         self.board = bs
         self.path = self.generate_path(self.board.x, self.board.y)
-        print(self.print_path())
+        #print(self.print_path())
 
     def solve(self, apply=True):
-        moves = [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]
-        my_dir = moves[np.random.randint(4)]
+        my_dir = self.path[self.board.snakeblocks[0][0]][self.board.snakeblocks[0][1]]
+        #snakeblocks is a list of blocks of the snake. snakeblocks[0] is the head., 0,1 is x,y respectively
         if apply:
             self.board.move(my_dir)
         return my_dir
@@ -177,54 +177,67 @@ class FixedPathSolver(Solver):
             raise Exception("No solution exists")
 
         output = [[Direction.NONE for _ in range(y)] for _ in range(x)]
+
+        def create_path(output):
+            x = np.shape(output)[0]
+            y = np.shape(output)[1]
+            #left edge
+            for i in range(1,y):
+                try:
+                    output[0][i] = Direction.DOWN
+                except IndexError:
+                    print("%s is out of bounds (size: %s)"%(i,np.shape(output)[1]))
+            #top edge
+            for i in range(1,x):
+                output[i][y-1] = Direction.LEFT
+            #bottom left
+            output[0][0] = Direction.RIGHT
+            # top and left edge is done
+            
+            #bottom up, every 2
+            for iy in range(0,y-1,2):
+                for ix in range(1,x-1):
+                    output[ix][iy] = Direction.RIGHT
+                output[x-1][iy] = Direction.UP
+
+            #bottom+1 up, every 2
+            for iy in range(1,y-1,2):
+                for ix in range(1,x):
+                    output[ix][iy] = Direction.LEFT
+                output[1][iy] = Direction.UP
+            return output
         
         #algo: go down the even end then wrap along other axis
         if y%2==0:
-            #left edge
-            for i in range(1,y):
-                output[0][i] = Direction.DOWN
-            #top edge
-            for i in range(1,x):
-                output[i][y-1] = Direction.LEFT
-            #bottom left
-            output[0][0] = Direction.RIGHT
-            # top and left edge is done
-            
-            #bottom up, every 2
-            for iy in range(0,y-1,2):
-                for ix in range(1,x-1):
-                    output[ix][iy] = Direction.RIGHT
-                output[x-1][iy] = Direction.UP
+            output = create_path(output)
 
-            #bottom+1 up, every 2
-            for iy in range(1,y-1,2):
-                for ix in range(1,x):
-                    output[ix][iy] = Direction.LEFT
-                output[1][iy] = Direction.UP
-
-        if x%2==0: ###WIP!
-            #top edge
-            for i in range(1,y):
-                output[i][0] = Direction.LEFT
-            #top edge
-            for i in range(1,x):
-                output[i][y-1] = Direction.LEFT
-            #bottom left
-            output[0][0] = Direction.RIGHT
-            # top and left edge is done
-            
-            #bottom up, every 2
-            for iy in range(0,y-1,2):
-                for ix in range(1,x-1):
-                    output[ix][iy] = Direction.RIGHT
-                output[x-1][iy] = Direction.UP
-
-            #bottom+1 up, every 2
-            for iy in range(1,y-1,2):
-                for ix in range(1,x):
-                    output[ix][iy] = Direction.LEFT
-                output[1][iy] = Direction.UP
-
+        #RIGHT => DOWN
+        #DOWN => LEFT
+        #LEFT => UP
+        #UP => RIGHT
+        elif x%2==0:
+            #transpose
+            t_output = np.array(output).T.tolist()
+            t_output = create_path(t_output)
+            #transpose again
+            tt_output = np.fliplr(np.array(t_output).T).tolist()
+            a = tt_output
+            out = [[Direction.NONE for _ in range(y)] for _ in range(x)]
+            for iy in range(y):
+                for ix in range(x):
+                    if tt_output[ix][iy] == Direction.RIGHT:
+                        out[ix][iy] = Direction.DOWN
+                    elif tt_output[ix][iy] == Direction.DOWN:
+                        out[ix][iy] = Direction.LEFT
+                    elif tt_output[ix][iy] == Direction.LEFT:
+                        out[ix][iy] = Direction.UP
+                    elif tt_output[ix][iy] == Direction.UP:
+                        out[ix][iy] = Direction.RIGHT
+                    else:
+                        raise Exception("Invalid direction: %s"%(tt_output[ix][iy]))
+            b = out
+            assert a!=b, "NoChangeError"
+            output = out
         return output
 
     def print_path(self):

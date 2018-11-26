@@ -57,3 +57,8 @@ while(True):
     time.sleep(0.1)"""
 
 my_solver = FixedPathSolver(game)
+while(True):
+    my_solver.solve()
+    print(my_solver.board)
+    time.sleep(0.1)
+    

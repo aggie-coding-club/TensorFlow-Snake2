@@ -95,7 +95,7 @@ class EVO_NN:
         moves = 0
         log = "move#: %s, score: %s\n"%(moves, score) + self.game.__str__()
         try:
-            for _ in range(50):
+            for _ in range(100):
                 moves += 1
                 move_dir, one_hot = self.eval_nn()
                 self.game.move3(move_dir)
@@ -118,7 +118,7 @@ class EVO_NN:
             else:
                 raise e
         finally:
-            if DEBUG or score > 20000:
+            if DEBUG:
                 print("Anomaly detected")
                 with open("log.txt","w", encoding="utf-8") as f:
                     f.write(log)
@@ -243,9 +243,9 @@ class GenerationEVO_NN:
 start = time.time()
 
 #start#
-g = GenerationEVO_NN(50)
+g = GenerationEVO_NN(load_from_file="history.json")
 g.save_weights("history.json")
-for i in range(100):
+for i in range(500):
     g.evaluate_weights(display=True)
     g.save_weights("history.json")
     g.evolve(evolution_wildness=0.1)

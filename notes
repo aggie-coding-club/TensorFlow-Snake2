@@ -29,3 +29,6 @@ Class Part : x, y, type(snake/apple/empty)
 Apple - one part
 Map - list of list of Parts
 Game - current state of a game containing a Map, Apple, Snake, Board Size (x/y)
+
+
+

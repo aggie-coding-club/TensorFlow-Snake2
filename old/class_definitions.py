@@ -221,7 +221,7 @@ class FixedPathSolver(Solver):
             # top and left edge is done
             
             #bottom up, every 2
-            for iy in range(0,y-1,2):
+            for iy in range(0, y-1, 2):
                 for ix in range(1,x-1):
                     output[ix][iy] = Direction.RIGHT
                 output[x-1][iy] = Direction.UP

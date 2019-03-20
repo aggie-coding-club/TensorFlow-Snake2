@@ -1,0 +1,31 @@
+#states/information
+
+    MxN squares
+
+    where the apple is
+
+    where the snake is
+        how long the snake is
+        where each snake piece is, each individual one
+
+
+#operations/methods
+
+    movement of snake
+
+    touching of the apple
+
+    touching itself
+
+    touching wall
+
+
+#class suggestions
+
+Data types
+
+Snake - list of parts
+Class Part : x, y, type(snake/apple/empty)
+Apple - one part
+Map - list of list of Parts
+Game - current state of a game containing a Map, Apple, Snake, Board Size (x/y)

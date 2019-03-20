@@ -10,7 +10,8 @@ steps = 0
 try:
     while(True):
         steps += 1
-        my_solver.solve()
+        direction = my_solver.solve(apply=False)
+        
         #print(my_solver.board)
         #time.sleep(0.1)
 except:

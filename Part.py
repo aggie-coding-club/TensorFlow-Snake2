@@ -16,4 +16,6 @@ class Part:
         self.x = x
         self.y = y
         self.part_type = part_type
+    def __print__(self):
+        print('[',self.part_type,': (',self.x,',',self.y,')]')
     raise NotImplementedError()

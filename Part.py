@@ -17,5 +17,5 @@ class Part:
         self.y = y
         self.part_type = part_type
     def __str__(self):
-        return '[' + self.part_type + ': (' + self.x + ',' + self.y + ')]'
+        return '[%s: (%s,%s)]' % (self.part_type,self.x,self.y)
     raise NotImplementedError()

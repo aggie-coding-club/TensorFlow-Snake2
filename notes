@@ -13,22 +13,19 @@
 
     movement of snake
 
-    touching of the apple
+    touching of the apple - 2
 
-    touching itself
+    touching itself - 1
 
-    touching wall
+    touching wall - n/a
 
 
 #class suggestions
 
 Data types
 
-Snake - list of parts
-Class Part : x, y, type(snake/apple/empty)
-Apple - one part
-Map - list of list of Parts
 Game - current state of a game containing a Map, Apple, Snake, Board Size (x/y)
-
-
-
+    Snake - list of parts
+    Class Part : x, y, type(snake/apple/empty)
+    Apple - one part
+    Map - list of list of Parts

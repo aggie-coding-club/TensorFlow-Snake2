@@ -10,6 +10,10 @@ part_type = 2 is apple
 class Part:
     """
     description of part class
+    defines how each part works
+    x,y are the row and column values of the part's position
+    part_type defines if it is a blank space, snake part, or an apple
+    __str__ makes the location and part type string values
     """
     def __init__(self, x, y, part_type):
         """

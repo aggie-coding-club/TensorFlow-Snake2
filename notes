@@ -26,6 +26,20 @@ Data types
 
 Game - current state of a game containing a Map, Apple, Snake, Board Size (x/y)
     Snake - list of parts
-    Class Part : x, y, type(snake/apple/empty)
+        Class Part : x, y, type(snake/apple/empty)
     Apple - one part
     Map - list of list of Parts
+
+
+
+
+
+#Process for snake movement
+on move:
+	Add block in the direction of the move to the "front" of the array
+	Change front block into snake block
+	
+	Check if we ate an apple
+	if we did, we're done
+	otherwise, change last block into normal
+	drop last block from snake list

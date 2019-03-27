@@ -1,7 +1,9 @@
 """
 description of part.py
 
-
+part_type = 0 is blank space
+part_type = 1 is snake part
+part_type = 2 is apple
 """
 
 

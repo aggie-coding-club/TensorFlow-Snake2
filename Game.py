@@ -9,7 +9,11 @@ from Part import Part
 from SnakeLL import SnakeLL
 import numpy as np
 
+
 class Game:
+    """
+    the state of the game
+    """
     def __init__(self, x, y):
         """
         remember to transpose board if printing**
@@ -62,5 +66,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    mygame = Game(5, 5)
+    mygame = Game(30, 30)
     print(mygame)

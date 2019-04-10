@@ -12,7 +12,7 @@ print("Snake's length is:", snake.length)
 print("Snake's list of blocks is", snake.ll)
 
 # Testing insert_front
-snake.insert_front(3)
+snake.insert_front('howdy')
 print(snake.ll)
 
 #Testing drop_back

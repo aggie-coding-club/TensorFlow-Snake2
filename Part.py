@@ -29,4 +29,10 @@ class Part:
         self.pnt_next = None
         self.pnt_prev = None
     def __str__(self):
-        return '[%s: (%s,%s)]' % (self.part_type,self.x,self.y)
+        #  return '[%s: (%s,%s)]' % (self.part_type,self.x,self.y)
+        if self.part_type is 1:
+            return "⬛"
+        elif self.part_type is 0:
+            return "⬜"
+        elif self.part_type is 2:
+            return "🍎"

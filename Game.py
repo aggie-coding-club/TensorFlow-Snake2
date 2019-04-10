@@ -7,10 +7,12 @@ import numpy as np
 import numpy.random
 from Part import Part
 from SnakeLL import SnakeLL
+import numpy as np
 
 class Game:
     def __init__(self, x, y):
         """
+        remember to transpose board if printing**
 
         :param x: how wide the board is
         :param y: how high the board is
@@ -18,15 +20,14 @@ class Game:
         # create variables
         self.x = x
         self.y = y
-        self.board = [] # list of list of Parts
+        self.board = np.zeros((x, y), dtype=object)  # list of list of Parts
         self.snake = SnakeLL()
-        self.apple = None # a Part
+        self.apple = None  # a Part
 
         # create the board of empty Parts
-        for ix in range(x): #for (int i=0; i<x; ++i) {} //c++
-            self.board.append([])
+        for ix in range(x):  # for (int i=0; i<x; ++i) {} //c++
             for iy in range(y):
-                self.board[ix].append(Part(ix, iy))
+                self.board[ix, iy] = Part(ix, iy, 0)
 
         # place the first snake block at a random location
         snake_x = numpy.random.randint(0, self.x)
@@ -49,10 +50,13 @@ class Game:
                     self.apple.part_type = 2
 
     def __str__(self):
-        return "The board is %sx%s, the snake's head is at: %s, %s" % (self.x,
-                                                                       self.y,
-                                                                       self.snake.front.x,
-                                                                       self.snake.front.y)
+        output = ""
+        for iy in range(self.y - 1, -1, -1):
+            for ix in range(self.x):  # x=0 => max x
+                output += str(self.board[iy, ix])
+            output += "\n"
+        return output
+
 
 
 

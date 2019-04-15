@@ -5,6 +5,7 @@ Linkedlist for Snake parts list, since we want to insert at the front
 from Part import Part
 
 class SnakeLL:
+    self.directionList = ['n','e','s','w']
     def __init__(self):
         self.front = None
         self.back = None
@@ -46,3 +47,24 @@ class SnakeLL:
         if self.length is 1:
             self.front = None
             self.back = None
+    
+    def direction(self):
+        '''
+        get which direction you're facing
+        :param obj: nothing
+        :return: direction char
+        '''
+        return self.directionList[self.dir]
+    
+    def turn(self,dir):
+        '''
+        turn to face a different direction
+        :param obj: either 'l' 'r' or 'f' (left/right/forward)
+        :return: nothing
+        '''
+        if dir == 'l':
+            # turn left
+            self.direction = (self.direction-1)%4
+        elif dir == 'r':
+            # turn right
+            self.direction = (self.direction+1)%4

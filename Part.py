@@ -5,6 +5,7 @@ part_type = 0 is blank space
 part_type = 1 is snake part
 part_type = 2 is apple
 """
+from Types import GameBlock
 
 
 class Part:
@@ -17,7 +18,7 @@ class Part:
 
     Essentially a struct
     """
-    def __init__(self, x, y, part_type=0):
+    def __init__(self, x, y, part_type=GameBlock.Blank):
         """
         description of our constructor
         """
@@ -25,14 +26,15 @@ class Part:
         self.y = y
         self.part_type = part_type
 
-        # specificly for the snake list
+        # specifically for the snake list
         self.pnt_next = None
         self.pnt_prev = None
+
     def __str__(self):
         #  return '[%s: (%s,%s)]' % (self.part_type,self.x,self.y)
-        if self.part_type is 1:
+        if self.part_type == GameBlock.Snake:
             return "⬛"
-        elif self.part_type is 0:
+        elif self.part_type == GameBlock.Blank:
             return "⬜"
-        elif self.part_type is 2:
+        elif self.part_type == GameBlock.Apple:
             return "🍎"

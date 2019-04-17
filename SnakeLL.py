@@ -2,14 +2,16 @@
 Linkedlist for Snake parts list, since we want to insert at the front
 """
 
-from Part import Part
+from Part import Part, GameBlock
+from Types import CardinalDirections, RelativeDirections
+
 
 class SnakeLL:
-    self.directionList = ['n','e','s','w']
     def __init__(self):
         self.front = None
         self.back = None
         self.length = 0
+        self.direction = CardinalDirections.WEST  # game starts always facing west
 
     def insert_front(self, obj):
         """
@@ -18,7 +20,7 @@ class SnakeLL:
         :return: nothing
         """
         assert isinstance(obj, Part), "Invalid obj type"
-        assert obj.part_type is 1, "You did not insert a snake part"
+        assert obj.part_type == GameBlock.Snake, "You did not insert a snake part"
         # self.ll = [obj, self.ll]
         self.length += 1
         if self.length == 1:
@@ -41,6 +43,7 @@ class SnakeLL:
 
         self.length -= 1
         if self.length > 1:
+            self.back.part_type = GameBlock.Blank
             self.back = self.back.pnt_prev
             self.back.pnt_next.pnt_prev = None
             self.back.pnt_next = None
@@ -48,23 +51,40 @@ class SnakeLL:
             self.front = None
             self.back = None
     
-    def direction(self):
-        '''
-        get which direction you're facing
-        :param obj: nothing
-        :return: direction char
-        '''
-        return self.directionList[self.dir]
+    def get_direction(self):
+        """
+        Get which direction you're facing (North, South, East, West)
+
+        :return: CardinalDirection enum
+        """
+        return self.direction
     
-    def turn(self,dir):
-        '''
-        turn to face a different direction
-        :param obj: either 'l' 'r' or 'f' (left/right/forward)
-        :return: nothing
-        '''
-        if dir == 'l':
-            # turn left
-            self.direction = (self.direction-1)%4
-        elif dir == 'r':
-            # turn right
-            self.direction = (self.direction+1)%4
+    def turn(self, turn_dir):
+        """
+        Change current direction (North, South, East, West) based on input Left, Forward, Right
+
+        :param turn_dir: RelativeDirections => Left, Forward, Right
+        :return: void
+        """
+        assert isinstance(turn_dir, RelativeDirections), "Was expecting RelativeDirections type, got: {}"\
+            .format(turn_dir.__class__.__name__)
+
+        # direction values are positive = clockwise
+        # so a change of -1, 0, or 1 would do the thing
+        self.direction = CardinalDirections((self.direction.value + turn_dir.value) % 4)
+
+    def get_front_coords(self):
+        offset = {
+            CardinalDirections.NORTH: (0, 1),
+            CardinalDirections.EAST: (1, 0),
+            CardinalDirections.SOUTH: (0, -1),
+            CardinalDirections.WEST: (-1, 0)
+        }[self.direction]
+
+        # offset will be a tuple (X, X), based on what self.direction is
+
+        new_x = self.front.x + offset[0]
+        new_y = self.front.y + offset[1]
+
+        return new_x, new_y
+
